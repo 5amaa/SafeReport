@@ -1,5 +1,7 @@
 
+using Microsoft.EntityFrameworkCore;
 using SafeReport.API.Extensions;
+using SafeReport.Infrastructure.Context;
 
 namespace SafeReport.API
 {
@@ -12,8 +14,11 @@ namespace SafeReport.API
             // Add services to the container.
 
             builder.Services.AddControllers();
-            // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-            builder.Services.AddEndpointsApiExplorer();
+
+			builder.Services.AddInfrastructureServices(builder.Configuration.GetConnectionString("DefaultConnection"));
+
+			// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+			builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
 			builder.Host.UseSerilogConfiguration(builder.Configuration);
 

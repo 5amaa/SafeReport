@@ -16,6 +16,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="Common\" />
+    <Folder Include="DTOs\" />
+    <Folder Include="Services\" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\SafeReport.Infrastructure\SafeReport.Infrastructure.csproj" />
   </ItemGroup>
 
