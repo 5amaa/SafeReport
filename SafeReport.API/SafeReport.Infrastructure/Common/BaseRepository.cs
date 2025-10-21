@@ -1,5 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using SafeReport.Application.Interfaces;
+using SafeReport.Core.Interfaces;
+using SafeReport.Core.Models;
 using SafeReport.Infrastructure.Context;
 
 namespace SafeReport.Infrastructure.Common
@@ -37,23 +39,35 @@ namespace SafeReport.Infrastructure.Common
 
 		public void SoftDelete(T entity)
 		{
-			var prop = typeof(T).GetProperty("IsDeleted");
-			if (prop != null && prop.PropertyType == typeof(bool))
+			if (entity is ISoftDelete softDeletable)
 			{
-				prop.SetValue(entity, true);
+				softDeletable.IsDeleted = true;
 				_dbSet.Update(entity);
 			}
 			else
 			{
-
 				_dbSet.Remove(entity);
 			}
 		}
 
-
 		public async Task SaveChangesAsync()
 		{
 			await _context.SaveChangesAsync();
+		}
+
+		public async Task<IEnumerable<T>> GetPagedAsync(int pageNumber, int pageSize)
+		{
+			IQueryable<T> query = _dbSet;
+
+			if (typeof(ISoftDelete).IsAssignableFrom(typeof(T)))
+			{
+				query = query.Where(e => !((ISoftDelete)e).IsDeleted);
+			}
+
+			return await query
+				.Skip((pageNumber - 1) * pageSize)
+				.Take(pageSize)
+				.ToListAsync();
 		}
 	}
 }

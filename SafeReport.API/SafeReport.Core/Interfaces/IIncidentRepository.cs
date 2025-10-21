@@ -10,5 +10,6 @@ namespace SafeReport.Core.Interfaces
 {
 	public interface IIncidentRepository : IBaseRepository<Incident>
 	{
+		Task<IEnumerable<Incident>> GetPagedAsync(int pageNumber, int pageSize);
 	}
 }
