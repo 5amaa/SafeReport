@@ -108,7 +108,24 @@ namespace SafeReport.Application.Services
 				return Response<PagedResultDto>.FailResponse($"Error: {ex.Message}");
 			}
 		}
+		public async Task<Response<string>> SoftDeleteReportAsync(Guid id)
+		{
+			try
+			{
+				var report = await _reportRepository.FindAsync(r=> r.Id == id);
 
+				if (report == null)
+					return Response<string>.FailResponse($"Report with ID {id} not found.");
+
+				_reportRepository.SoftDelete(report);
+				_reportRepository.SaveChangesAsync();
+				return Response<string>.SuccessResponse("Report soft deleted successfully.");
+			}
+			catch (Exception ex)
+			{
+				return Response<string>.FailResponse($"Error deleting report: {ex.Message}");
+			}
+		}
 	}
 }
 

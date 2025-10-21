@@ -1,4 +1,5 @@
-﻿using System;
+﻿using SafeReport.Core.Interfaces;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
@@ -8,7 +9,7 @@ using System.Threading.Tasks;
 namespace SafeReport.Core.Models
 {
 	[Table("Report")]
-	public class Report
+	public class Report: ISoftDelete
 	{
 		public Guid Id { get; set; }
 		public string Name { get; set; } = string.Empty;
