@@ -33,5 +33,16 @@ namespace SafeReport.API.Controllers
 
 			return Ok(result);
 		}
+
+		[HttpGet("PrintReport/{id}")]
+		public async Task<IActionResult> PrintReport(Guid id)
+		{
+			var pdfBytes = await _reportService.GetReportsPdfAsync(id);
+
+			if (pdfBytes == null)
+				return NotFound("Report not found.");
+
+			return File(pdfBytes, "application/pdf", $"Report_{id}.pdf");
+		}
 	}
 }

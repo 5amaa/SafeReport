@@ -14,5 +14,6 @@ namespace SafeReport.Application.ISevices
 		Task<Response<PagedResultDto>> GetPaginatedReportsAsync(PaginationFilter filter, int? incidentId, DateTime? dateTime);
 
 		Task<Response<string>> SoftDeleteReportAsync(Guid id);
+		Task<byte[]> GetReportsPdfAsync(Guid id);
 	}
 }
