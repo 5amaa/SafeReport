@@ -1,5 +1,6 @@
 ﻿using SafeReport.Web.DTOs;
 using SafeReport.Web.Interfaces;
+using System.Collections.Generic;
 
 
 namespace SafeReport.Web.Services;
@@ -13,61 +14,202 @@ public class ReportService: IReportService
         _http = http;
     }
 
-    //public async Task<List<ReportDTO>> GetAllReportsAsync()
-    //{
-    //    var result = await _http.GetFromJsonAsync<List<ReportDTO>>("api/Reports/GetAll");
-    //    return result ?? new List<ReportDTO>();
-    //}
-
-    //public async Task<bool> DeleteReportAsync(int id)
-    //{
-    //    var response = await _http.DeleteAsync($"api/Reports/Delete/{id}");
-    //    return response.IsSuccessStatusCode;
-    //}
-
-    //public async Task PrintReportAsync(int id)
-    //{
-    //    var response = await _http.GetAsync($"api/Reports/Print/{id}");
-    //    if (response.IsSuccessStatusCode)
-    //    {
-    //    }
-    //}
-
-
-    public async Task<List<ReportDTO>> GetAllReportsAsync()
+    public async Task<Response<PagedResultDto>> GetAllReportsAsync(ReportFilterDto filter)
     {
-       
-        await Task.Delay(500); 
+        await Task.Delay(500); // simulate API call
+        var now = DateTime.UtcNow;
+        var allReports = new List<ReportDTO>
+        {
+             new ReportDTO
+        {
+            Id = Guid.NewGuid(),
+            Name = "Sample Report 1",
+            CreatedDate = now.AddHours(-5),
+            IncidentId = 1,
+            IncidentName = "Fire",
+            IncidentTypeId = 2,
+            IncidentTypeName = "Forests",
+            TimeSinceCreated = "5 ساعات"
+        },
+        new ReportDTO
+        {
+            Id = Guid.NewGuid(),
+            Name = "Sample Report 2",
+            CreatedDate = now.AddDays(-1),
+            IncidentId = 2,
+            IncidentName = "Assault",
+            IncidentTypeId = 1,
+            IncidentTypeName = "Urban",
+            TimeSinceCreated = "1 يوم"
+        },
+        new ReportDTO
+        {
+            Id = Guid.NewGuid(),
+            Name = "Sample Report 3",
+            CreatedDate = now.AddDays(-3),
+            IncidentId = 3,
+            IncidentName = "Theft",
+            IncidentTypeId = 1,
+            IncidentTypeName = "Urban",
+            TimeSinceCreated = "3 أيام"
+        },
+        new ReportDTO
+        {
+            Id = Guid.NewGuid(),
+            Name = "Sample Report 2",
+            CreatedDate = now.AddDays(-1),
+            IncidentId = 2,
+            IncidentName = "Assault",
+            IncidentTypeId = 1,
+            IncidentTypeName = "Urban",
+            TimeSinceCreated = "1 يوم"
+        },
+        new ReportDTO
+        {
+            Id = Guid.NewGuid(),
+            Name = "Sample Report 3",
+            CreatedDate = now.AddDays(-3),
+            IncidentId = 3,
+            IncidentName = "Theft",
+            IncidentTypeId = 1,
+            IncidentTypeName = "Urban",
+            TimeSinceCreated = "3 أيام"
+        },
+        new ReportDTO
+        {
+            Id = Guid.NewGuid(),
+            Name = "Sample Report 2",
+            CreatedDate = now.AddDays(-1),
+            IncidentId = 2,
+            IncidentName = "Assault",
+            IncidentTypeId = 1,
+            IncidentTypeName = "Urban",
+            TimeSinceCreated = "1 يوم"
+        },
+        new ReportDTO
+        {
+            Id = Guid.NewGuid(),
+            Name = "Sample Report 3",
+            CreatedDate = now.AddDays(-3),
+            IncidentId = 3,
+            IncidentName = "Theft",
+            IncidentTypeId = 1,
+            IncidentTypeName = "Urban",
+            TimeSinceCreated = "3 أيام"
+        },
+        new ReportDTO
+        {
+            Id = Guid.NewGuid(),
+            Name = "Sample Report 2",
+            CreatedDate = now.AddDays(-1),
+            IncidentId = 2,
+            IncidentName = "Assault",
+            IncidentTypeId = 1,
+            IncidentTypeName = "Urban",
+            TimeSinceCreated = "1 يوم"
+        },
+        new ReportDTO
+        {
+            Id = Guid.NewGuid(),
+            Name = "Sample Report 3",
+            CreatedDate = now.AddDays(-3),
+            IncidentId = 3,
+            IncidentName = "Theft",
+            IncidentTypeId = 1,
+            IncidentTypeName = "Urban",
+            TimeSinceCreated = "3 أيام"
+        },
+        new ReportDTO
+        {
+            Id = Guid.NewGuid(),
+            Name = "Sample Report 2",
+            CreatedDate = now.AddDays(-1),
+            IncidentId = 2,
+            IncidentName = "Assault",
+            IncidentTypeId = 1,
+            IncidentTypeName = "Urban",
+            TimeSinceCreated = "1 يوم"
+        },
+        new ReportDTO
+        {
+            Id = Guid.NewGuid(),
+            Name = "Sample Report 3",
+            CreatedDate = now.AddDays(-3),
+            IncidentId = 3,
+            IncidentName = "Theft",
+            IncidentTypeId = 1,
+            IncidentTypeName = "Urban",
+            TimeSinceCreated = "3 أيام"
+        },
+        new ReportDTO
+        {
+            Id = Guid.NewGuid(),
+            Name = "Sample Report 2",
+            CreatedDate = now.AddDays(-1),
+            IncidentId = 2,
+            IncidentName = "Assault",
+            IncidentTypeId = 1,
+            IncidentTypeName = "Urban",
+            TimeSinceCreated = "1 يوم"
+        },
+        new ReportDTO
+        {
+            Id = Guid.NewGuid(),
+            Name = "Sample Report 3",
+            CreatedDate = now.AddDays(-3),
+            IncidentId = 3,
+            IncidentName = "Theft",
+            IncidentTypeId = 1,
+            IncidentTypeName = "Urban",
+            TimeSinceCreated = "3 أيام"
+        }
+        };
+        // Apply filtering if needed
+        var filteredReports = allReports.AsEnumerable();
+        if (filter.IncidentId.HasValue)
+            filteredReports = filteredReports.Where(r => r.IncidentId == filter.IncidentId.Value);
+        if (filter.CreatedDate.HasValue)
+            filteredReports = filteredReports.Where(r => r.CreatedDate.Date == filter.CreatedDate.Value.Date);
 
-        var dummyData = new List<ReportDTO>
-            {
-                new ReportDTO
-                {
-                    Id = 1,
-                    ReportType = "Daily Summary",
-                    Description = "Summary of today’s operations",
-                    CreatedAt = DateTime.Now.AddHours(-3)
-                },
-                new ReportDTO
-                {
-                    Id = 2,
-                    ReportType = "Monthly Performance",
-                    Description = "Performance metrics for the current month",
-                    CreatedAt = DateTime.Now.AddDays(-7)
-                },
-                new ReportDTO
-                {
-                    Id = 3,
-                    ReportType = "System Errors",
-                    Description = "List of critical system errors",
-                    CreatedAt = DateTime.Now.AddDays(-1)
-                }
-            };
+        var totalCount = filteredReports.Count();
 
-        return dummyData;
+        // Apply pagination
+        var pagedReports = filteredReports
+            .Skip((filter.PageNumber - 1) * filter.PageSize)
+            .Take(filter.PageSize)
+            .ToList();
+
+        var pagedResult = new PagedResultDto
+        {
+            TotalCount = totalCount,
+            PageNumber = filter.PageNumber,
+            PageSize = filter.PageSize,
+            Reports = pagedReports
+        };
+
+        return Response<PagedResultDto>.SuccessResponse(pagedResult);
     }
 
-    public async Task<bool> DeleteReportAsync(int id)
+    public Task<List<Response<IncidentType>>> GetIncidentTypesAsync()
+        {
+            var incidentTypes = new List<IncidentType>
+            {
+                new IncidentType { Id = 1, Name = "Fire" },
+                new IncidentType { Id = 2, Name = "Assault" },
+                new IncidentType { Id = 3, Name = "Theft" },
+                new IncidentType { Id = 4, Name = "Medical Emergency" },
+                new IncidentType { Id = 5, Name = "Other" }
+            };
+
+            // Wrap each incident type in a Response<IncidentType>
+            var responseList = incidentTypes
+                .Select(it => Response<IncidentType>.SuccessResponse(it))
+                .ToList();
+
+            return Task.FromResult(responseList);
+        }
+
+        public async Task<bool> DeleteReportAsync(int id)
     {
         await Task.Delay(200); // delay وهمي
         return true; // كأن الحذف تم بنجاح

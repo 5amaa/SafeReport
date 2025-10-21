@@ -4,7 +4,8 @@ namespace SafeReport.Web.Interfaces;
 
 public interface IReportService
 {
-    Task<List<ReportDTO>> GetAllReportsAsync();
+    Task<Response<PagedResultDto>> GetAllReportsAsync(ReportFilterDto filter);
     Task<bool> DeleteReportAsync(int id);
     Task PrintReportAsync(int id);
+    Task<List<Response<IncidentType>>> GetIncidentTypesAsync();
 }

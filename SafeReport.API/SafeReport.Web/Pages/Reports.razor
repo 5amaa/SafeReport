@@ -1,16 +1,32 @@
 ﻿@page "/reports"
-<PageTitle>Reports</PageTitle>
 @using SafeReport.Web.DTOs
 @using SafeReport.Web.Services
-@inject SafeReport.Web.Interfaces.IReportService ReportService
+
+<PageTitle>Reports</PageTitle>
 
 <h3 class="mb-4">Reports List</h3>
 
-@if (reports is null)
-{
-    <p>Loading reports...</p>
-}
-else if (reports.Count == 0)
+<div class="row mb-3">
+    <div class="col-md-3">
+        <input type="date" class="form-control" @bind="filterDate" />
+    </div>
+    <div class="col-md-3">
+        <select class="form-select" @bind="filterType">
+            <option value="">All Types</option>
+            @foreach (var type in reportTypes)
+            {
+                <option value="@type.Id">@type.Name</option>
+            }
+        </select>
+    </div>
+    <div class="col-md-3">
+        <button class="btn btn-primary" @onclick="ApplyFilters">Filter</button>
+        <button class="btn btn-secondary ms-2" @onclick="ResetFilters">Reset</button>
+    </div>
+</div>
+
+
+@if (pagedReports is null || pagedReports.Count == 0)
 {
     <p>No reports available.</p>
 }
@@ -19,19 +35,21 @@ else
     <table class="table table-striped">
         <thead class="table-dark">
             <tr>
-                <th>Type</th>
-                <th>Description</th>
+                <th>Name</th>
+                <th>Incident Name</th>
+                <th>Incident Type</th>
                 <th>Created Date</th>
                 <th>Actions</th>
             </tr>
         </thead>
         <tbody>
-            @foreach (var report in reports)
+            @foreach (var report in pagedReports)
             {
                 <tr>
-                    <td>@report.ReportType</td>
-                    <td>@report.Description</td>
-                    <td>@report.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                    <td>@report.Name</td>
+                    <td>@report.IncidentName</td>
+                    <td>@report.IncidentTypeName</td>
+                    <td>@report.CreatedDate.ToString("yyyy-MM-dd HH:mm")</td>
                     <td>
                         <button class="btn btn-sm btn-primary me-2" @onclick="() => PrintReport(report.Id)">
                             <i class="bi bi-printer"></i> Print
@@ -44,27 +62,24 @@ else
             }
         </tbody>
     </table>
-}
 
-@code {
-    private List<ReportDTO>? reports;
+    <!-- Pagination -->
+    <nav>
+        <ul class="pagination">
+            <li class="page-item @(currentPage == 1 ? "disabled" : "")">
+                <button class="page-link" @onclick="PrevPage">Previous</button>
+            </li>
+               @for (int i = 1; i <= totalPages; i++)
+                 {
+                var cpage = i; 
+               <li class="page-item @(currentPage == cpage ? "active" : "")">
+                 <button class="page-link" @onclick="() => GoToPage(cpage)">@cpage</button>
+               </li>
+                 }
 
-    protected override async Task OnInitializedAsync()
-    {
-        reports = await ReportService.GetAllReportsAsync();
-    }
-
-    private async Task PrintReport(int id)
-    {
-        await ReportService.PrintReportAsync(id);
-    }
-
-    private async Task DeleteReport(int id)
-    {
-        bool deleted = await ReportService.DeleteReportAsync(id);
-        if (deleted)
-        {
-            reports = reports?.Where(r => r.Id != id).ToList();
-        }
-    }
+            <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
+                <button class="page-link" @onclick="NextPage">Next</button>
+            </li>
+        </ul>
+    </nav>
 }
