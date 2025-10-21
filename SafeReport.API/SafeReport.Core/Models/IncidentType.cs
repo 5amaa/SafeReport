@@ -8,8 +8,8 @@ using System.Threading.Tasks;
 
 namespace SafeReport.Core.Models
 {
-	[Table("FireIncident")]
-	public class FireIncident: ISoftDelete
+	[Table("IncidentType")]
+	public class IncidentType : ISoftDelete
 	{
 		public int Id { get; set; }
 

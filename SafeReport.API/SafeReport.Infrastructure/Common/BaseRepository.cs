@@ -3,6 +3,7 @@ using SafeReport.Application.Interfaces;
 using SafeReport.Core.Interfaces;
 using SafeReport.Core.Models;
 using SafeReport.Infrastructure.Context;
+using System.Linq.Expressions;
 
 namespace SafeReport.Infrastructure.Common
 {
@@ -55,19 +56,51 @@ namespace SafeReport.Infrastructure.Common
 			await _context.SaveChangesAsync();
 		}
 
-		public async Task<IEnumerable<T>> GetPagedAsync(int pageNumber, int pageSize)
+		public async Task<IEnumerable<T>> GetPagedAsync(
+	int pageNumber,
+	int pageSize,
+	Expression<Func<T, bool>>? filter = null)
 		{
 			IQueryable<T> query = _dbSet;
 
+			// Apply soft delete filter if the entity supports it
 			if (typeof(ISoftDelete).IsAssignableFrom(typeof(T)))
 			{
 				query = query.Where(e => !((ISoftDelete)e).IsDeleted);
+			}
+
+			// Apply custom filter if provided
+			if (filter != null)
+			{
+				query = query.Where(filter);
 			}
 
 			return await query
 				.Skip((pageNumber - 1) * pageSize)
 				.Take(pageSize)
 				.ToListAsync();
+		}
+		public async Task<IEnumerable<T>> FindAllAsync(Expression<Func<T, bool>> predicate)
+		{
+			IQueryable<T> query = _dbSet.Where(predicate);
+
+			if (typeof(ISoftDelete).IsAssignableFrom(typeof(T)))
+			{
+				query = query.Where(e => !((ISoftDelete)e).IsDeleted);
+			}
+
+			return await query.AsNoTracking().ToListAsync();
+		}
+		public async Task<T> FindAsync(Expression<Func<T, bool>> predicate)
+		{
+			IQueryable<T> query = _dbSet.Where(predicate);
+
+			if (typeof(ISoftDelete).IsAssignableFrom(typeof(T)))
+			{
+				query = query.Where(e => !((ISoftDelete)e).IsDeleted);
+			}
+
+			return query.AsNoTracking().FirstOrDefault();
 		}
 	}
 }

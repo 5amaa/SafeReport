@@ -5,9 +5,10 @@ using SafeReport.Application.ISevices;
 using SafeReport.Core.Interfaces;
 using SafeReport.Core.Models;
 
-public class IncidentService(IIncidentRepository incidentRepository, IMapper mapper) : IIncidentService
+public class IncidentService(IIncidentRepository incidentRepository, IIncidentTypeRepository incidentTypeRepository, IMapper mapper) : IIncidentService
 {
 	private readonly IIncidentRepository _incidentRepository = incidentRepository;
+	private readonly IIncidentTypeRepository _incidentTypeRepository = incidentTypeRepository;
 	private readonly IMapper _mapper = mapper;
 
 	public async Task<Response<IEnumerable<IncidentDto>>> GetAllAsync(PaginationFilter filter)
@@ -24,20 +25,24 @@ public class IncidentService(IIncidentRepository incidentRepository, IMapper map
 		}
 	}
 
-	public async Task<Response<IncidentDto?>> GetByIdAsync(int id)
+	public async Task<Response<List<IncidentTypeDto?>>> GetIncidentType(int incidentId)
 	{
 		try
 		{
-			var incident = await _incidentRepository.GetByIdAsync(id);
-			if (incident == null || incident.IsDeleted)
-				return Response<IncidentDto?>.FailResponse("Incident not found.");
+			// Fetch all incident types matching the provided ID and not deleted
+			var incidents = await _incidentTypeRepository.FindAllAsync(t => t.IncidentId == incidentId && !t.IsDeleted);
 
-			var dto = _mapper.Map<IncidentDto>(incident);
-			return Response<IncidentDto?>.SuccessResponse(dto, "Incident found.");
+			if (incidents == null || !incidents.Any())
+				return Response<List<IncidentTypeDto?>>.FailResponse("Incident not found.");
+
+			// Map to DTO list
+			var dtoList = _mapper.Map<List<IncidentTypeDto?>>(incidents);
+
+			return Response<List<IncidentTypeDto?>>.SuccessResponse(dtoList, "Incident(s) found successfully.");
 		}
 		catch (Exception ex)
 		{
-			return Response<IncidentDto?>.FailResponse($"Error: {ex.Message}");
+			return Response<List<IncidentTypeDto?>>.FailResponse($"Error: {ex.Message}");
 		}
 	}
 

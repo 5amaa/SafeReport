@@ -8,8 +8,7 @@ using System.Threading.Tasks;
 
 namespace SafeReport.Core.Interfaces
 {
-	public interface IIncidentRepository : IBaseRepository<Incident>
+	public interface IIncidentTypeRepository : IBaseRepository<IncidentType>
 	{
-		
 	}
 }

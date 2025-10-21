@@ -24,10 +24,10 @@ namespace SafeReport.API.Controllers
 			return Ok(response);
 		}
 
-		[HttpGet("{id}")]
-		public async Task<ActionResult<Response<IncidentDto?>>> GetById(int id)
+		[HttpGet("{incidentId}")]
+		public async Task<ActionResult<Response<List<IncidentTypeDto?>>>> GetIncidentType(int incidentId)
 		{
-			var response = await _incidentService.GetByIdAsync(id);
+			var response = await _incidentService.GetIncidentType(incidentId);
 			if (!response.Success)
 				return NotFound(response);
 
