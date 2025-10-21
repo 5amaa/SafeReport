@@ -12,6 +12,7 @@ namespace SafeReport.Infrastructure.Common
 		public BaseRepository(SafeReportDbContext context)
 		{
 			_context = context;
+
 			_dbSet = _context.Set<T>();
 		}
 
