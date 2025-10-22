@@ -42,14 +42,11 @@ namespace SafeReport.API
 				app.UseSwagger();
 				app.UseSwaggerUI();
 			}
+            app.UseMiddleware<RequestCultureMiddleware>();
             app.UseCors("AllowBlazorClient");
             app.UseHttpsRedirection();
-
 			app.UseAuthorization();
-
-
 			app.MapControllers();
-
 			app.Run();
 		}
 	}

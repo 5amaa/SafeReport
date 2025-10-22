@@ -1,4 +1,5 @@
-﻿using SafeReport.Web.DTOs;
+﻿using Microsoft.JSInterop;
+using SafeReport.Web.DTOs;
 using SafeReport.Web.Interfaces;
 using System.Collections.Generic;
 using System.Net.Http.Json;
@@ -9,31 +10,49 @@ namespace SafeReport.Web.Services;
 public class ReportService: IReportService
 {
     private readonly HttpClient _httpClient;
-
-    public ReportService(HttpClient httpClient)
+    private readonly IJSRuntime _jsRuntime;
+    public ReportService(HttpClient httpClient, IJSRuntime jsRuntime)
     {
         _httpClient = httpClient;
+        _jsRuntime = jsRuntime;
     }
+    private void AddCultureHeader()
+    {
+        var currentCulture = System.Globalization.CultureInfo.CurrentCulture.Name; // ex: "ar-EG" or "en-US"
 
+        if (_httpClient.DefaultRequestHeaders.Contains("Accept-Language"))
+            _httpClient.DefaultRequestHeaders.Remove("Accept-Language");
+
+        _httpClient.DefaultRequestHeaders.Add("Accept-Language", currentCulture);
+    }
     public async Task<Response<PagedResultDto>> GetAllReportsAsync(ReportFilterDto filter)
     {
-        var response = await _httpClient.GetFromJsonAsync<Response<IEnumerable<PagedResultDto>>>("api/Report/GetAll");
+        AddCultureHeader();
+        try
+        {
+            var httpResponse = await _httpClient.PostAsJsonAsync("api/Report/GetAll", filter);
 
-        //if (response != null && response.Data != null)
-        //{
-        //    var responseList = response.Data.
-        //        .Select(it => Response<IncidentType>.SuccessResponse( ))
-        //        .ToList();
+            if (httpResponse.IsSuccessStatusCode)
+            {
+                var result = await httpResponse.Content.ReadFromJsonAsync<Response<PagedResultDto>>();
+                if (result != null && result.Data != null)
+                    return Response<PagedResultDto>.SuccessResponse(result.Data, "Request succeeded");
 
-        //    return responseList;
-        //}
+                return Response<PagedResultDto>.FailResponse("Request succeeded but no data was returned.");
+            }
 
-        return Response<PagedResultDto>.SuccessResponse(null, response.Message);
+            return Response<PagedResultDto>.FailResponse("Failed to fetch reports or no data found.");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Error fetching reports: {ex.Message}");
+            return Response<PagedResultDto>.FailResponse("An unexpected error occurred while fetching reports.");
+        }
+
     }
-
-
     public async Task<List<Response<IncidentType>>> GetAllIncidentsAsync()
     {
+        AddCultureHeader();
         try
         {
             var response = await _httpClient.GetFromJsonAsync<Response<IEnumerable<IncidentDto>>>("api/Incident");
@@ -67,16 +86,54 @@ public class ReportService: IReportService
                 };
         }
     }
-
-        public async Task<bool> DeleteReportAsync(int id)
+    public async Task<bool> DeleteReportAsync(Guid id)
     {
-        await Task.Delay(200); // delay وهمي
-        return true; // كأن الحذف تم بنجاح
+        AddCultureHeader();
+        try
+        {
+            var response = await _httpClient.DeleteAsync($"api/Report/SoftDelete/{id}");
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadFromJsonAsync<Response<string>>();
+                return result != null && result.Success;
+            }
+            return false;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Exception deleting report: {ex.Message}");
+            return false;
+        }
+    }
+    public async Task<bool> PrintReportAsync(Guid id)
+    {
+        AddCultureHeader();
+        try
+        {
+            var response = await _httpClient.GetAsync($"api/Report/PrintReport/{id}");
+
+            if (response.IsSuccessStatusCode)
+            {
+                var pdfBytes = await response.Content.ReadAsByteArrayAsync();
+                if (pdfBytes.Length == 0)
+                {
+                    Console.WriteLine("Empty PDF received.");
+                    return false;
+                }
+                var base64 = Convert.ToBase64String(pdfBytes);
+                await _jsRuntime.InvokeVoidAsync("pdfHelper.openPdf", base64, $"Report_{id}.pdf");
+                return true;
+            }
+
+            Console.WriteLine($" Failed to print report: {response.ReasonPhrase}");
+            return false;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($" Exception while printing report: {ex.Message}");
+            return false;
+        }
     }
 
-    public async Task PrintReportAsync(int id)
-    {
-        await Task.Delay(300); // delay وهمي
-        Console.WriteLine($"Printing report #{id}...");
-    }
+
 }

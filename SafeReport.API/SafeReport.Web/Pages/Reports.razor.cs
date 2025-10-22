@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Components;
+using Microsoft.JSInterop;
 using SafeReport.Web.DTOs;
 using SafeReport.Web.Services;
 
@@ -8,12 +9,13 @@ public partial class Reports
 {
     private List<ReportDTO> pagedReports = new();
     private List<IncidentType> reportTypes = new();
-
+    [Inject]
+    Microsoft.JSInterop.IJSRuntime JS { get; set; }
     private int? filterType;
     private DateTime? filterDate;
 
     private int currentPage = 1;
-    private int pageSize = 2;
+    private int pageSize = 10;
     private int totalPages ;
 
     [Inject]
@@ -95,12 +97,31 @@ public partial class Reports
 
     private async Task PrintReport(Guid id)
     {
-        // await ReportService.PrintReportAsync(id);
+        var success = await ReportService.PrintReportAsync(id);
+        if (!success)
+        {
+            await JS.InvokeVoidAsync("alert", "Failed to open PDF report.");
+        }
     }
+
+
 
     private async Task DeleteReport(Guid id)
     {
-        // var success = await ReportService.DeleteReportAsync(id);
-        // if (success) await LoadReportsAsync();
+        bool confirm = await JS.InvokeAsync<bool>("confirm", "Are you sure you want to delete this report?");
+        if (!confirm)
+            return; 
+        bool success = await ReportService.DeleteReportAsync(id);
+        if (success)
+        {
+            await JS.InvokeVoidAsync("alert", "Report deleted successfully ✅");
+            await LoadReportsAsync(); 
+        }
+        else
+        {
+            await JS.InvokeVoidAsync("alert", "Failed to delete the report ❌");
+        }
     }
+
+
 }

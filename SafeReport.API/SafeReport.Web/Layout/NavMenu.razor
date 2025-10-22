@@ -1,6 +1,7 @@
 ﻿@using System.Globalization
+@using SafeReport.Web.ResourcesFiles
+@inject IStringLocalizer<Resource> Localizer
 
-@inject IStringLocalizer<Resource> L
 <div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
         <a class="navbar-brand" href="">SafeReport.Web</a>
@@ -14,7 +15,7 @@
     <nav class="flex-column">
         <div class="nav-item px-3">
             <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> @L["Home"]
+                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> @Localizer["Home"]
             </NavLink>
         </div>
         <div class="nav-item px-3">
