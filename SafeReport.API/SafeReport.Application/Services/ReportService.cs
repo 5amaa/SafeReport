@@ -23,8 +23,6 @@ namespace SafeReport.Application.Services
         public ReportService(
             IReportRepository reportRepository,
             IIncidentTypeRepository incidentTypeRepository,
-            IViolationRepository violationRepository,
-            IOtherRepository otherRepository,
             IMapper mapper,
             IHubContext<ReportHub> hubContext,
             IWebHostEnvironment env)
@@ -234,30 +232,7 @@ namespace SafeReport.Application.Services
         }
 
 
-        //public async Task<Response<string>> AddReportAsync(ReportDto reportDto)
-        //{
-        //    try
-        //    {
-        //        var report = new Report
-        //        {
-        //            Name = reportDto.Name,
-        //            IncidentId = reportDto.IncidentId,
-        //            IncidentTypeId = reportDto.IncidentTypeId,
-        //            CreatedDate = DateTime.UtcNow
-        //        };
 
-        //        await _reportRepository.AddAsync(report);
-        //        await _reportRepository.SaveChangesAsync();
-
-        //        await _hubContext.Clients.All.SendAsync("ReceiveNewReport", reportDto);
-
-        //        return Response<string>.SuccessResponse("Report added successfully.");
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        return Response<string>.FailResponse($"Error adding report: {ex.Message}");
-        //    }
-        //}
 
     }
 }
