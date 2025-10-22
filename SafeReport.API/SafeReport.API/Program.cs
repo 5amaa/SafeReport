@@ -1,6 +1,7 @@
 
 using Microsoft.EntityFrameworkCore;
 using SafeReport.API.Extensions;
+using SafeReport.Application.Helper;
 using SafeReport.Application.Mappings;
 
 namespace SafeReport.API
