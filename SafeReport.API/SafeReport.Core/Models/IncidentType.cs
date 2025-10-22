@@ -8,13 +8,13 @@ using System.Threading.Tasks;
 
 namespace SafeReport.Core.Models
 {
-	[Table("ViolationIncident")]
-	public class ViolationIncident: ISoftDelete
+	[Table("IncidentType")]
+	public class IncidentType : ISoftDelete
 	{
 		public int Id { get; set; }
 
-		public string NameEn { get; set; } 
-		public string NameAr { get; set; } 
+		public string NameEn { get; set; }
+		public string NameAr { get; set; }
 
 		public string? DescriptionEn { get; set; }
 		public string? DescriptionAr { get; set; }
@@ -23,6 +23,6 @@ namespace SafeReport.Core.Models
 		public bool IsDeleted { get; set; }
 
 		public int IncidentId { get; set; }
-		public virtual Incident Incident { get; set; }
+		public virtual Incident Incident { get; set; } 
 	}
 }

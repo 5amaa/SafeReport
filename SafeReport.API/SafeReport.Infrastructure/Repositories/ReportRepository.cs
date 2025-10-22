@@ -1,4 +1,5 @@
-﻿using SafeReport.Core.Interfaces;
+﻿using Microsoft.EntityFrameworkCore;
+using SafeReport.Core.Interfaces;
 using SafeReport.Core.Models;
 using SafeReport.Infrastructure.Common;
 using SafeReport.Infrastructure.Context;
@@ -10,7 +11,12 @@ using System.Threading.Tasks;
 
 namespace SafeReport.Infrastructure.Repositories
 {
-	public class FireRepository(SafeReportDbContext context) : BaseRepository<FireIncident>(context), IFireRepository
+	public class ReportRepository(SafeReportDbContext context) : BaseRepository<Report>(context), IReportRepository
 	{
+		public async Task<int> GetTotalCountAsync()
+		{
+			return await _dbSet.CountAsync();
+		}
+
 	}
 }

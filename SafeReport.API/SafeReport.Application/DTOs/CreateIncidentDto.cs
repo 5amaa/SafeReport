@@ -4,22 +4,13 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SafeReport.Core.Models
+namespace SafeReport.Application.DTOs
 {
-	public class FireIncident
+	public class CreateIncidentDto
 	{
-		public int Id { get; set; }
-
 		public string NameEn { get; set; }
 		public string NameAr { get; set; }
-
 		public string? DescriptionEn { get; set; }
 		public string? DescriptionAr { get; set; }
-
-		public DateTime CreationDate { get; set; }
-		public bool IsDeleted { get; set; }
-
-		public int IncidentId { get; set; }
-		public virtual Incident Incident { get; set; } 
 	}
 }

@@ -8,7 +8,8 @@ using System.Threading.Tasks;
 
 namespace SafeReport.Core.Interfaces
 {
-	public interface IFireRepository: IBaseRepository<FireIncident>
+	public interface IReportRepository:IBaseRepository<Report>
 	{
+		Task<int> GetTotalCountAsync();
 	}
 }
