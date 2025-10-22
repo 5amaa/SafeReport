@@ -97,10 +97,19 @@ namespace SafeReport.Infrastructure.Common
 
             return await query.AsNoTracking().ToListAsync();
         }
-        public async Task<T> FindAsync(Expression<Func<T, bool>> predicate)
+        public async Task<T> FindAsync(Expression<Func<T, bool>> predicate,
+    Expression<Func<T, object>>[]? includes = null)
         {
             IQueryable<T> query = _dbSet.Where(predicate);
 
+            // Apply includes dynamically
+            if (includes != null)
+            {
+                foreach (var include in includes)
+                {
+                    query = query.Include(include);
+                }
+            }
             if (typeof(ISoftDelete).IsAssignableFrom(typeof(T)))
             {
                 query = query.Where(e => !((ISoftDelete)e).IsDeleted);

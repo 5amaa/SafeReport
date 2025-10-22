@@ -1,13 +1,12 @@
 ﻿using Microsoft.JSInterop;
 using SafeReport.Web.DTOs;
 using SafeReport.Web.Interfaces;
-using System.Collections.Generic;
 using System.Net.Http.Json;
 
 
 namespace SafeReport.Web.Services;
 
-public class ReportService: IReportService
+public class ReportService : IReportService
 {
     private readonly HttpClient _httpClient;
     private readonly IJSRuntime _jsRuntime;
@@ -62,7 +61,7 @@ public class ReportService: IReportService
                 var incidentTypes = response.Data.Select(d => new IncidentType
                 {
                     Id = d.Id,
-                    Name = d.NameEn 
+                    Name = d.Name
                 });
                 var responseList = incidentTypes
                     .Select(it => Response<IncidentType>.SuccessResponse(it))

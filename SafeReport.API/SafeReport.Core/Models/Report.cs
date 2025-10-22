@@ -8,6 +8,7 @@ namespace SafeReport.Core.Models
     {
         public Guid Id { get; set; }
         public string Description { get; set; } = string.Empty;
+        public string? DescriptionAr { get; set; } = string.Empty;
         public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
         public int IncidentId { get; set; }
         public int IncidentTypeId { get; set; }

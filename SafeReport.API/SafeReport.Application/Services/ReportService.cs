@@ -7,6 +7,7 @@ using SafeReport.Application.Helper;
 using SafeReport.Application.ISevices;
 using SafeReport.Core.Interfaces;
 using SafeReport.Core.Models;
+using System.Globalization;
 using System.Linq.Expressions;
 using System.Text.Json;
 
@@ -64,37 +65,50 @@ namespace SafeReport.Application.Services
                     include);
 
                 var totalCount = await _reportRepository.GetTotalCountAsync();
-
-                // Extract all related incidentTypeIds to fetch them in one go
+                // Get related incident type info
                 var incidentTypeIds = reports.Select(r => r.IncidentTypeId).Distinct().ToList();
                 var incidentIds = reports.Select(r => r.IncidentId).Distinct().ToList();
 
-                var incidentTypes = await _incidentTypeRepository
-                    .FindAllAsync(t => incidentIds.Contains(t.IncidentId) && incidentTypeIds.Contains(t.Id) && !t.IsDeleted);
+                var incidentTypes = await _incidentTypeRepository.FindAllAsync(
+                    t => incidentIds.Contains(t.IncidentId) &&
+                         incidentTypeIds.Contains(t.Id) &&
+                         !t.IsDeleted);
 
+                var currentCulture = CultureInfo.CurrentCulture.TwoLetterISOLanguageName;
 
-                var incidentTypeDict = incidentTypes.ToDictionary(t => (t.IncidentId, t.Id), t => t.NameEn);
+                // Prepare incident types dictionary
+                var incidentTypeDict = incidentTypes.ToDictionary(
+                    t => (t.IncidentId, t.Id),
+                    t => currentCulture == "ar" ? t.NameAr ?? t.NameEn : t.NameEn ?? t.NameAr
+                );
 
-                // Map
+                // Map reports
                 var reportDtos = reports.Select(report =>
                 {
+                    var description = currentCulture == "ar"
+                        ? report.DescriptionAr ?? report.Description
+                        : report.Description ?? report.DescriptionAr;
+
+                    var incidentName = currentCulture == "ar"
+                        ? report.Incident?.NameAr ?? report.Incident?.NameEn
+                        : report.Incident?.NameEn ?? report.Incident?.NameAr;
+
                     incidentTypeDict.TryGetValue((report.IncidentId, report.IncidentTypeId), out string? incidentTypeName);
 
                     return new ReportDto
                     {
                         Id = report.Id,
-                        Description = report.Description,
+                        Description = description,
                         CreatedDate = report.CreatedDate,
                         IncidentId = report.IncidentId,
-                        IncidentName = report.Incident?.NameEn,
+                        IncidentName = incidentName ?? "N/A",
                         IncidentTypeId = report.IncidentTypeId,
                         IncidentTypeName = incidentTypeName ?? "N/A",
                         Address = report.Address,
                         Image = report.ImagePath,
-                        TimeSinceCreated = string.Empty,
+                        TimeSinceCreated = string.Empty
                     };
                 }).ToList();
-
 
                 // Wrap in paged result
                 var pagedResult = new PagedResultDto
@@ -130,37 +144,20 @@ namespace SafeReport.Application.Services
                 return Response<string>.FailResponse($"Error deleting report: {ex.Message}");
             }
         }
-        //public async Task<IActionResult> PrintReports([FromQuery] PaginationFilter filter, int? incidentId, DateTime? dateTime)
-        //{
-        //	try
-        //	{
-        //		var result = await GetPaginatedReportsAsync(filter, incidentId, dateTime);
-
-        //		if (result == null || result.Data == null || !result.Data.Reports.Any())
-        //			return Response<string>.FailResponse("No reports found to print.");
-
-        //		// Generate the PDF
-        //		var pdfBytes = PrintService.GenerateReportsPdf(result.Data.Reports);
-
-        //		// Return as downloadable PDF
-        //		return File(pdfBytes, "application/pdf", $"Reports_{DateTime.UtcNow:yyyyMMddHHmm}.pdf");
-        //	}
-        //	catch (Exception ex)
-        //	{
-        //		return StatusCode(500, $"Error generating PDF: {ex.Message}");
-        //	}
-        //}
         public async Task<byte[]> GetReportsPdfAsync(Guid id)
         {
-            //var result = await GetPaginatedReportsAsync(filter, incidentId, dateTime);
-            Report report = await _reportRepository.FindAsync(r => r.Id == id && !r.IsDeleted);
+            Expression<Func<Report, object>>[] includes =
+            {
+                r => r.Incident
+            };
+
+            var report = await _reportRepository.FindAsync(r => r.Id == id, includes);
+
+
+            var incidentType = await _incidentTypeRepository.FindAsync(t => t.Id == report.IncidentTypeId && t.IncidentId == report.IncidentId);
             if (report == null)
                 return null;
-            // Map to DTO if necessary
-
-
-            var reportDto = _mapper.Map<ReportDto>(report);
-            return PrintService.GenerateReportPdf(reportDto);
+            return PrintService.GenerateReportPdf(report, incidentType);
         }
         public async Task<Response<string>> AddReportAsync(CreateReportDto reportDto)
         {

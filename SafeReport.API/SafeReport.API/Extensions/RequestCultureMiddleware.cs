@@ -12,14 +12,14 @@ namespace SafeReport.API.Extensions
         public async Task InvokeAsync(HttpContext context)
         {
             var defaultCulture = new CultureInfo("en-US");
-            var cultureHeader = context.Request.Headers["Accept-Language"].ToString();
+            var cultureHeader = context.Request.Headers["Accept-Language"];
 
             CultureInfo culture;
             if (!string.IsNullOrWhiteSpace(cultureHeader))
             {
                 try
                 {
-                  
+
                     culture = new CultureInfo(cultureHeader);
                 }
                 catch
