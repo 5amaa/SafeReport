@@ -13,9 +13,12 @@
     <div class="col-md-3">
         <select class="form-select" @bind="filterType">
             <option value="">All Types</option>
-            @foreach (var type in reportTypes)
+            @if (reportTypes != null && reportTypes.Any())
             {
-                <option value="@type.Id">@type.Name</option>
+                @foreach (var item in reportTypes)
+                {
+                    <option value="@item.Id">@item.Name</option>
+                }
             }
         </select>
     </div>

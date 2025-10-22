@@ -11,7 +11,8 @@ var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.Services.AddScoped<ReportService>();
 builder.Services.AddSingleton<NotificationService>();
 // Register HttpClient for WebAssembly
-builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
+builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri("https://localhost:7196/") });
+
 
 builder.RootComponents.Add<App>("#app");
 builder.Services.AddLocalization(options => options.ResourcesPath = "ResourcesFiles");

@@ -21,7 +21,7 @@ public partial class Reports
 
     protected override async Task OnInitializedAsync()
     {
-        var typesData = await ReportService.GetIncidentTypesAsync();
+        var typesData = await ReportService.GetAllIncidentsAsync();
         reportTypes = typesData.Select(r => r.Data!).ToList();
 
         await LoadReportsAsync();

@@ -22,8 +22,19 @@ namespace SafeReport.API
 			builder.Services.AddSwaggerGen();
 			builder.Services.AddAutoMapper(typeof(MappingProfile));
 			builder.Host.UseSerilogConfiguration(builder.Configuration);
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("AllowBlazorClient", policy =>
+                {
+                    policy
+                        .WithOrigins("https://localhost:7252") 
+                        .AllowAnyHeader()
+                        .AllowAnyMethod()
+                        .AllowCredentials();
+                });
+            });
 
-			var app = builder.Build();
+            var app = builder.Build();
 
 			// Configure the HTTP request pipeline.
 			if (app.Environment.IsDevelopment())
@@ -31,8 +42,8 @@ namespace SafeReport.API
 				app.UseSwagger();
 				app.UseSwaggerUI();
 			}
-
-			app.UseHttpsRedirection();
+            app.UseCors("AllowBlazorClient");
+            app.UseHttpsRedirection();
 
 			app.UseAuthorization();
 
