@@ -168,7 +168,7 @@ namespace SafeReport.Application.Services
             {
                 var report = _mapper.Map<Report>(reportDto);
 
-                // ✅ Get address from coordinates
+                // Get address from coordinates
                 // report.Address = await GetAddressFromCoordinatesAsync(reportDto.Latitude, reportDto.Longitude);
 
                 if (reportDto.Image != null)
