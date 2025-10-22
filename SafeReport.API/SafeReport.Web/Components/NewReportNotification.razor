@@ -1,29 +1,4 @@
-﻿@* @using SafeReport.Web.DTOs
-@using SafeReport.Web.Services
-@inject NotificationService NotificationService
-
-    <div class="position-relative m-2">
-        <i class="bi bi-bell-fill"></i>
-        <span class="badge bg-danger">@newReportsCount</span>
-    </div>
-
-@code {
-    private int newReportsCount = 0;
-
-    protected override async Task OnInitializedAsync()
-    {
-        NotificationService.OnNewReport += HandleNewReport;
-        await NotificationService.StartAsync();
-    }
-
-    private void HandleNewReport(ReportDTO report)
-    {
-        newReportsCount++;
-        InvokeAsync(StateHasChanged);
-    }
-}
- *@
-@using SafeReport.Web.DTOs
+﻿@using SafeReport.Web.DTOs
 @using SafeReport.Web.Services
 @inject NotificationService NotificationService
 @inject IJSRuntime JS
