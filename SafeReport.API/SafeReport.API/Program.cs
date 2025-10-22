@@ -15,13 +15,15 @@ namespace SafeReport.API
 
 			builder.Services.AddControllers();
 
-			builder.Services.AddInfrastructureServices(builder.Configuration.GetConnectionString("DefaultConnection"));
-			builder.Services.AddApplicationServices();
-			// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-			builder.Services.AddEndpointsApiExplorer();
-			builder.Services.AddSwaggerGen();
-			builder.Services.AddAutoMapper(typeof(MappingProfile));
-			builder.Host.UseSerilogConfiguration(builder.Configuration);
+            builder.Services.AddInfrastructureServices(builder.Configuration.GetConnectionString("DefaultConnection"));
+            builder.Services.AddApplicationServices();
+            builder.Services.AddSignalR();
+            // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+            builder.Services.AddEndpointsApiExplorer();
+            builder.Services.AddSwaggerGen();
+            builder.Services.AddAutoMapper(typeof(MappingProfile));
+            builder.Host.UseSerilogConfiguration(builder.Configuration);
+
             builder.Services.AddCors(options =>
             {
                 options.AddPolicy("AllowBlazorClient", policy =>
@@ -34,20 +36,24 @@ namespace SafeReport.API
                 });
             });
 
-            var app = builder.Build();
+			var app = builder.Build();
 
-			// Configure the HTTP request pipeline.
-			if (app.Environment.IsDevelopment())
-			{
-				app.UseSwagger();
-				app.UseSwaggerUI();
-			}
+            // Configure the HTTP request pipeline.
+            if (app.Environment.IsDevelopment())
+            {
+                app.UseSwagger();
+                app.UseSwaggerUI();
+            }
             app.UseMiddleware<RequestCultureMiddleware>();
             app.UseCors("AllowBlazorClient");
             app.UseHttpsRedirection();
-			app.UseAuthorization();
-			app.MapControllers();
-			app.Run();
-		}
-	}
+            app.MapHub<ReportHub>("/reportHub");
+            app.UseAuthorization();
+
+
+            app.MapControllers();
+
+            app.Run();
+        }
+    }
 }
