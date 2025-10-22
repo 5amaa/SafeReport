@@ -12,7 +12,9 @@ namespace SafeReport.Application.Mappings
             CreateMap<Incident, IncidentDto>().ReverseMap();
             CreateMap<CreateIncidentDto, Incident>();
             CreateMap<Report, ReportDto>()
-               .ForMember(dest => dest.IncidentName, opt => opt.MapFrom(src => src.Incident.NameEn));
+         .ForMember(dest => dest.IncidentName, opt => opt.MapFrom(src => src.Incident.NameEn))
+         .ForMember(dest => dest.Image, opt => opt.MapFrom(src => src.ImagePath))
+         .ForMember(dest => dest.Address, opt => opt.MapFrom(src => src.Address)).ReverseMap();
             CreateMap<IncidentType, IncidentTypeDto>().ReverseMap();
 
             CreateMap<CreateReportDto, Report>()

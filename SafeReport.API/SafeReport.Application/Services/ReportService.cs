@@ -8,6 +8,7 @@ using SafeReport.Application.ISevices;
 using SafeReport.Core.Interfaces;
 using SafeReport.Core.Models;
 using System.Linq.Expressions;
+using System.Text.Json;
 
 namespace SafeReport.Application.Services
 {
@@ -54,11 +55,13 @@ namespace SafeReport.Application.Services
                     predicate = r => r.CreatedDate.Date == filter.CreatedDate.Value.Date;
                 }
 
+                Expression<Func<Report, object>> include = r => r.Incident;
                 // Pass to repository
                 var reports = await _reportRepository.GetPagedAsync(
                     filter.PageNumber.Value,
                     filter.PageSize.Value,
-                    predicate);
+                    predicate,
+                    include);
 
                 var totalCount = await _reportRepository.GetTotalCountAsync();
 
@@ -72,7 +75,7 @@ namespace SafeReport.Application.Services
 
                 var incidentTypeDict = incidentTypes.ToDictionary(t => (t.IncidentId, t.Id), t => t.NameEn);
 
-                // Map manually or use AutoMapper projection
+                // Map
                 var reportDtos = reports.Select(report =>
                 {
                     incidentTypeDict.TryGetValue((report.IncidentId, report.IncidentTypeId), out string? incidentTypeName);
@@ -86,6 +89,8 @@ namespace SafeReport.Application.Services
                         IncidentName = report.Incident?.NameEn,
                         IncidentTypeId = report.IncidentTypeId,
                         IncidentTypeName = incidentTypeName ?? "N/A",
+                        Address = report.Address,
+                        Image = report.ImagePath,
                         TimeSinceCreated = string.Empty,
                     };
                 }).ToList();
@@ -163,6 +168,8 @@ namespace SafeReport.Application.Services
             {
                 var report = _mapper.Map<Report>(reportDto);
 
+                // ✅ Get address from coordinates
+                // report.Address = await GetAddressFromCoordinatesAsync(reportDto.Latitude, reportDto.Longitude);
 
                 if (reportDto.Image != null)
                 {
@@ -195,6 +202,40 @@ namespace SafeReport.Application.Services
 
 
         }
+        private async Task<string?> GetAddressFromCoordinatesAsync(double latitude, double longitude)
+        {
+            try
+            {
+                var handler = new HttpClientHandler
+                {
+                    ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true
+                };
+
+                using var httpClient = new HttpClient(handler);
+                var url = $"https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat={latitude}&lon={longitude}";
+
+
+                httpClient.DefaultRequestHeaders.UserAgent.ParseAdd("SafeReportApp/1.0");
+
+                var response = await httpClient.GetAsync(url);
+
+                if (!response.IsSuccessStatusCode)
+                    return "Unknown location";
+
+                var json = await response.Content.ReadAsStringAsync();
+                using var doc = JsonDocument.Parse(json);
+
+                if (doc.RootElement.TryGetProperty("display_name", out var displayName))
+                    return displayName.GetString();
+
+                return "Unknown location";
+            }
+            catch (Exception ex)
+            {
+                return $"Error adding report: {ex.Message}";
+            }
+        }
+
 
         //public async Task<Response<string>> AddReportAsync(ReportDto reportDto)
         //{

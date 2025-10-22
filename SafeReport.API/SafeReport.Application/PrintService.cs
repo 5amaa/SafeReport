@@ -31,14 +31,14 @@ namespace SafeReport.Application
             AddHeaderCell(table, "Incident");
             AddHeaderCell(table, "Incident Type");
             AddHeaderCell(table, "Created Date");
-            AddHeaderCell(table, "Time Since Created");
+            AddHeaderCell(table, "Address");
 
             // Single report row
             AddCell(table, report.Description ?? "N/A");
             AddCell(table, report.IncidentName ?? "N/A");
             AddCell(table, report.IncidentTypeName ?? "N/A");
             AddCell(table, report.CreatedDate.ToString("yyyy-MM-dd HH:mm"));
-            AddCell(table, report.TimeSinceCreated ?? "N/A");
+            AddCell(table, report.Address ?? "N/A");
 
             document.Add(table);
             document.Close();
