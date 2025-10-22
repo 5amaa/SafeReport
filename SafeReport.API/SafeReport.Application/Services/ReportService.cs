@@ -189,8 +189,8 @@ namespace SafeReport.Application.Services
                 await _reportRepository.AddAsync(report);
                 await _reportRepository.SaveChangesAsync();
 
-
-                await _hubContext.Clients.All.SendAsync("ReceiveNewReport", reportDto);
+                ReportDto reportdto = _mapper.Map<ReportDto>(report);
+                await _hubContext.Clients.All.SendAsync("ReceiveNewReport", reportdto);
 
                 return Response<string>.SuccessResponse("Report added successfully.");
             }
