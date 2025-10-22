@@ -1,6 +1,9 @@
 ﻿using AutoMapper;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.SignalR;
 using SafeReport.Application.Common;
 using SafeReport.Application.DTOs;
+using SafeReport.Application.Helper;
 using SafeReport.Application.ISevices;
 using SafeReport.Core.Interfaces;
 using SafeReport.Core.Models;
@@ -13,17 +16,22 @@ namespace SafeReport.Application.Services
         private readonly IReportRepository _reportRepository;
         private readonly IIncidentTypeRepository _incidentTypeRepository;
         private readonly IMapper _mapper;
-
+        private readonly IHubContext<ReportHub> _hubContext;
+        private readonly IWebHostEnvironment _env;
         public ReportService(
             IReportRepository reportRepository,
             IIncidentTypeRepository incidentTypeRepository,
             IViolationRepository violationRepository,
             IOtherRepository otherRepository,
-            IMapper mapper)
+            IMapper mapper,
+            IHubContext<ReportHub> hubContext,
+            IWebHostEnvironment env)
         {
             _reportRepository = reportRepository;
             _incidentTypeRepository = incidentTypeRepository;
             _mapper = mapper;
+            _hubContext = hubContext;
+            _env = env;
         }
 
         public async Task<Response<PagedResultDto>> GetPaginatedReportsAsync(ReportFilterDto? filter)
@@ -72,7 +80,7 @@ namespace SafeReport.Application.Services
                     return new ReportDto
                     {
                         Id = report.Id,
-                        Name = report.Name,
+                        Description = report.Description,
                         CreatedDate = report.CreatedDate,
                         IncidentId = report.IncidentId,
                         IncidentName = report.Incident?.NameEn,
@@ -145,22 +153,73 @@ namespace SafeReport.Application.Services
                 return null;
             // Map to DTO if necessary
 
-            var reportDto = new ReportDto
-            {
-                Id = report.Id,
-                Name = report.Name,
-                IncidentId = report.IncidentId,
-                IncidentName = report.Incident?.NameEn,
-                IncidentTypeId = report.IncidentTypeId,
-                IncidentTypeName = "fff",
-                CreatedDate = report.CreatedDate,
-                TimeSinceCreated = (DateTime.UtcNow - report.CreatedDate).TotalDays >= 1
-                    ? $"{(int)(DateTime.UtcNow - report.CreatedDate).TotalDays} يوم"
-                    : $"{(int)(DateTime.UtcNow - report.CreatedDate).TotalHours} ساعة"
-            };
 
+            var reportDto = _mapper.Map<ReportDto>(report);
             return PrintService.GenerateReportPdf(reportDto);
         }
+        public async Task<Response<string>> AddReportAsync(CreateReportDto reportDto)
+        {
+            try
+            {
+                var report = _mapper.Map<Report>(reportDto);
+
+
+                if (reportDto.Image != null)
+                {
+                    var uploadsFolder = Path.Combine(_env.WebRootPath, "images");
+                    Directory.CreateDirectory(uploadsFolder);
+
+                    var fileName = Guid.NewGuid() + Path.GetExtension(reportDto.Image.FileName);
+                    var filePath = Path.Combine(uploadsFolder, fileName);
+
+                    using var stream = new FileStream(filePath, FileMode.Create);
+                    await reportDto.Image.CopyToAsync(stream);
+
+                    report.ImagePath = $"images/{fileName}";
+                }
+
+
+                await _reportRepository.AddAsync(report);
+                await _reportRepository.SaveChangesAsync();
+
+
+                await _hubContext.Clients.All.SendAsync("ReceiveNewReport", reportDto);
+
+                return Response<string>.SuccessResponse("Report added successfully.");
+            }
+            catch (Exception ex)
+            {
+                return Response<string>.FailResponse($"Error adding report: {ex.Message}");
+            }
+
+
+
+        }
+
+        //public async Task<Response<string>> AddReportAsync(ReportDto reportDto)
+        //{
+        //    try
+        //    {
+        //        var report = new Report
+        //        {
+        //            Name = reportDto.Name,
+        //            IncidentId = reportDto.IncidentId,
+        //            IncidentTypeId = reportDto.IncidentTypeId,
+        //            CreatedDate = DateTime.UtcNow
+        //        };
+
+        //        await _reportRepository.AddAsync(report);
+        //        await _reportRepository.SaveChangesAsync();
+
+        //        await _hubContext.Clients.All.SendAsync("ReceiveNewReport", reportDto);
+
+        //        return Response<string>.SuccessResponse("Report added successfully.");
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return Response<string>.FailResponse($"Error adding report: {ex.Message}");
+        //    }
+        //}
 
     }
 }

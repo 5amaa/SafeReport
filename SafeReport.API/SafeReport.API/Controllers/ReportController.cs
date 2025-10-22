@@ -12,6 +12,12 @@ namespace SafeReport.API.Controllers
         private readonly IReportService _reportService = reportService;
 
 
+        [HttpPost("AddReport")]
+        public async Task<IActionResult> AddReport([FromForm] CreateReportDto reportDto)
+        {
+            await _reportService.AddReportAsync(reportDto);
+            return Ok(new { message = "Report created successfully" });
+        }
 
         [HttpPost("GetAll")]
         public async Task<Response<PagedResultDto>> GetAll(ReportFilterDto? filter)

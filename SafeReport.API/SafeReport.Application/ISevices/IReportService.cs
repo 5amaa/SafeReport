@@ -10,5 +10,6 @@ namespace SafeReport.Application.ISevices
 
         Task<Response<string>> SoftDeleteReportAsync(Guid id);
         Task<byte[]> GetReportsPdfAsync(Guid id);
+        Task<Response<string>> AddReportAsync(CreateReportDto reportDto);
     }
 }

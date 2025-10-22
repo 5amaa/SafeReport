@@ -1,45 +1,47 @@
 
 using Microsoft.EntityFrameworkCore;
 using SafeReport.API.Extensions;
+using SafeReport.Application.Helper;
 using SafeReport.Application.Mappings;
 
 namespace SafeReport.API
 {
-	public class Program
-	{
-		public static void Main(string[] args)
-		{
-			var builder = WebApplication.CreateBuilder(args);
+    public class Program
+    {
+        public static void Main(string[] args)
+        {
+            var builder = WebApplication.CreateBuilder(args);
 
-			// Add services to the container.
+            // Add services to the container.
 
-			builder.Services.AddControllers();
+            builder.Services.AddControllers();
 
-			builder.Services.AddInfrastructureServices(builder.Configuration.GetConnectionString("DefaultConnection"));
-			builder.Services.AddApplicationServices();
-			// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-			builder.Services.AddEndpointsApiExplorer();
-			builder.Services.AddSwaggerGen();
-			builder.Services.AddAutoMapper(typeof(MappingProfile));
-			builder.Host.UseSerilogConfiguration(builder.Configuration);
+            builder.Services.AddInfrastructureServices(builder.Configuration.GetConnectionString("DefaultConnection"));
+            builder.Services.AddApplicationServices();
+            builder.Services.AddSignalR();
+            // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+            builder.Services.AddEndpointsApiExplorer();
+            builder.Services.AddSwaggerGen();
+            builder.Services.AddAutoMapper(typeof(MappingProfile));
+            builder.Host.UseSerilogConfiguration(builder.Configuration);
 
-			var app = builder.Build();
+            var app = builder.Build();
 
-			// Configure the HTTP request pipeline.
-			if (app.Environment.IsDevelopment())
-			{
-				app.UseSwagger();
-				app.UseSwaggerUI();
-			}
+            // Configure the HTTP request pipeline.
+            if (app.Environment.IsDevelopment())
+            {
+                app.UseSwagger();
+                app.UseSwaggerUI();
+            }
 
-			app.UseHttpsRedirection();
+            app.UseHttpsRedirection();
+            app.MapHub<ReportHub>("/reportHub");
+            app.UseAuthorization();
 
-			app.UseAuthorization();
 
+            app.MapControllers();
 
-			app.MapControllers();
-
-			app.Run();
-		}
-	}
+            app.Run();
+        }
+    }
 }
