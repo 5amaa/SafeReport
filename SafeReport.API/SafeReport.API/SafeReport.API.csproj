@@ -14,4 +14,8 @@
     <ProjectReference Include="..\SafeReport.Application\SafeReport.Application.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="wwwroot\" />
+  </ItemGroup>
+
 </Project>
