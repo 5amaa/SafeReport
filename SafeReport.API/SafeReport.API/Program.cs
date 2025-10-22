@@ -6,15 +6,15 @@ using SafeReport.Application.Mappings;
 
 namespace SafeReport.API
 {
-    public class Program
-    {
-        public static void Main(string[] args)
-        {
-            var builder = WebApplication.CreateBuilder(args);
+	public class Program
+	{
+		public static void Main(string[] args)
+		{
+			var builder = WebApplication.CreateBuilder(args);
 
-            // Add services to the container.
+			// Add services to the container.
 
-            builder.Services.AddControllers();
+			builder.Services.AddControllers();
 
             builder.Services.AddInfrastructureServices(builder.Configuration.GetConnectionString("DefaultConnection"));
             builder.Services.AddApplicationServices();
@@ -25,7 +25,19 @@ namespace SafeReport.API
             builder.Services.AddAutoMapper(typeof(MappingProfile));
             builder.Host.UseSerilogConfiguration(builder.Configuration);
 
-            var app = builder.Build();
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("AllowBlazorClient", policy =>
+                {
+                    policy
+                        .WithOrigins("https://localhost:7252") 
+                        .AllowAnyHeader()
+                        .AllowAnyMethod()
+                        .AllowCredentials();
+                });
+            });
+
+			var app = builder.Build();
 
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
@@ -33,7 +45,8 @@ namespace SafeReport.API
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
-
+            app.UseMiddleware<RequestCultureMiddleware>();
+            app.UseCors("AllowBlazorClient");
             app.UseHttpsRedirection();
             app.MapHub<ReportHub>("/reportHub");
             app.UseAuthorization();
