@@ -32,7 +32,7 @@ namespace SafeReport.Application
 			{
 				var logo = Image.GetInstance(logoPath);
 				logo.ScaleAbsolute(550, 550);
-				logo.GrayFill = 0.9f; 
+				logo.GrayFill = 5.20f; 
 
 				
 				float x = (PageSize.A4.Width - logo.ScaledWidth) / 2;
@@ -40,10 +40,18 @@ namespace SafeReport.Application
 
 				logo.SetAbsolutePosition(x, y);
 
-				
-				PdfContentByte under = writer.DirectContentUnder;
-				under.AddImage(logo);
-			}
+                PdfContentByte under = writer.DirectContentUnder;
+
+              
+                PdfGState gstate = new PdfGState();
+                gstate.FillOpacity = 0.5f; 
+                gstate.StrokeOpacity = 0.5f;
+
+                under.SaveState();
+                under.SetGState(gstate);
+                under.AddImage(logo);
+                under.RestoreState();
+            }
 
 
 			// === Title Header ===
