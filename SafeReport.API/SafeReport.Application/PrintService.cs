@@ -153,68 +153,93 @@ namespace SafeReport.Application
 
 			// === Image Section ===
 
-			PdfPTable imagesTable = new PdfPTable(2)
+			// List of Images to test
+			List<string> imagePaths = new List<string>
 			{
-				WidthPercentage = 100,
-				SpacingBefore = 10f,
-				SpacingAfter = 10f
+				"images/c890935a-793b-498f-bbb4-9467d79187b3.png",
+				"images/c890935a-793b-498f-bbb4-9467d79187b3.png",
+				"images/c890935a-793b-498f-bbb4-9467d79187b3.png",
+				"images/c890935a-793b-498f-bbb4-9467d79187b3.png",
+				"images/c890935a-793b-498f-bbb4-9467d79187b3.png",
+				"images/c890935a-793b-498f-bbb4-9467d79187b3.png",
+				"images/c890935a-793b-498f-bbb4-9467d79187b3.png",
+				"images/c890935a-793b-498f-bbb4-9467d79187b3.png",
+				"images/c890935a-793b-498f-bbb4-9467d79187b3.png",
+				"images/c890935a-793b-498f-bbb4-9467d79187b3.png"
 			};
 
-			imagesTable.DefaultCell.Border = Rectangle.NO_BORDER;
+			int imagesPerPage = 4;
+			int totalPages = (int)Math.Ceiling((double)imagePaths.Count / imagesPerPage);
 
-			if (!string.IsNullOrEmpty(report.ImagePath))
+			for (int page = 0; page < totalPages; page++)
 			{
-
-				string fullImagePath = Path.Combine(env.WebRootPath, report.ImagePath.Replace('/', Path.DirectorySeparatorChar));
-
-				if (File.Exists(fullImagePath))
+				
+				if (page > 0)
 				{
-					iTextSharp.text.Image img = iTextSharp.text.Image.GetInstance(fullImagePath);
-					img.ScaleToFit(400f, 400f);
-					img.SpacingBefore = 50f;
-					img.SpacingAfter = 50f;
-					img.Alignment = Element.ALIGN_CENTER;
-
-
-					PdfPTable imageBox = new PdfPTable(1)
-					{
-						WidthPercentage = 100,
-						HorizontalAlignment = Element.ALIGN_CENTER
-					};
-					PdfPCell imgCell = new PdfPCell(img, true)
-					{
-						Border = Rectangle.BOX,
-						Padding = 5f,
-						HorizontalAlignment = Element.ALIGN_CENTER
-					};
-					imageBox.AddCell(imgCell);
-					document.Add(imageBox);
+					document.NewPage();
+					AddWatermark(writer, watermarkPath);
+					AddLogo(document, logoPath);
 				}
-				else
-				{
-					imagesTable.AddCell(new PdfPCell(new Phrase(isArabic ? "لم يتم العثور على الصورة" : "Image not found", valueFont))
-					{
-						Border = Rectangle.NO_BORDER,
-						HorizontalAlignment = Element.ALIGN_CENTER,
-						Padding = 10f
-					});
-				}
-			}
-			else
-			{
-				imagesTable.AddCell(new PdfPCell(new Phrase(isArabic ? "لا توجد صور مرفقة" : "No images attached", valueFont))
-				{
-					Border = Rectangle.NO_BORDER,
-					HorizontalAlignment = Element.ALIGN_CENTER,
-					Padding = 10f
-				});
-			}
 
-			document.Add(imagesTable);
-			AddPageNumber(writer, document, baseFont, isArabic);
-			document.Close();
-			return memoryStream.ToArray();
+				PdfPTable imageTable = new PdfPTable(2)
+				{
+					WidthPercentage = 100,
+					SpacingBefore = 10f,
+					SpacingAfter = 10f
+				};
+				imageTable.DefaultCell.Border = Rectangle.NO_BORDER;
+
+				var currentImages = imagePaths.Skip(page * imagesPerPage).Take(imagesPerPage).ToList();
+
+				foreach (var path in currentImages)
+				{
+					string fullImagePath = Path.Combine(env.WebRootPath, path.Replace('/', Path.DirectorySeparatorChar));
+
+					if (File.Exists(fullImagePath))
+					{
+						var img = iTextSharp.text.Image.GetInstance(fullImagePath);
+						img.ScaleToFit(250f, 250f);
+						img.Alignment = Element.ALIGN_CENTER;
+
+						PdfPCell imgCell = new PdfPCell(img, true)
+						{
+							Border = Rectangle.BOX,
+							Padding = 5f,
+							HorizontalAlignment = Element.ALIGN_CENTER,
+							VerticalAlignment = Element.ALIGN_MIDDLE
+						};
+						imageTable.AddCell(imgCell);
+					}
+					else
+					{
+						PdfPCell placeholder = new PdfPCell(new Phrase(isArabic ? "لم يتم العثور على الصورة" : "Image not found", valueFont))
+						{
+							Border = Rectangle.BOX,
+							Padding = 5f,
+							HorizontalAlignment = Element.ALIGN_CENTER,
+							VerticalAlignment = Element.ALIGN_MIDDLE
+						};
+						imageTable.AddCell(placeholder);
+					}
+				}
+
+				int emptyCells = imagesPerPage - currentImages.Count;
+				for (int i = 0; i < emptyCells; i++)
+				{
+					PdfPCell emptyCell = new PdfPCell(new Phrase(" "))
+					{
+						Border = Rectangle.NO_BORDER
+					};
+					imageTable.AddCell(emptyCell);
+				}
+
+				document.Add(imageTable);
+				AddPageNumber(writer, document, baseFont, isArabic);
+			}
+				document.Close();
+				return memoryStream.ToArray();
 		}
+		
 		private static void AddRow(PdfPTable table, string label, string value, Font labelFont, Font valueFont, bool isArabic)
 		{
 			if (isArabic)
