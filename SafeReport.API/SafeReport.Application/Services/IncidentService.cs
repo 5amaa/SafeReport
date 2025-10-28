@@ -16,7 +16,7 @@ public class IncidentService(IIncidentRepository incidentRepository, IIncidentTy
     {
         try
         {
-            var items = await _incidentRepository.GetPagedAsync(filter.PageNumber, filter.PageSize);
+            var items = await _incidentRepository.GetAllAsync();
             var currentCulture = CultureInfo.CurrentCulture.TwoLetterISOLanguageName;
             var result = items.Select(item => new IncidentDto
             {

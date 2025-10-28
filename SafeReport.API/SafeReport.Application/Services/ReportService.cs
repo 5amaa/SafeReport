@@ -41,7 +41,6 @@ namespace SafeReport.Application.Services
         {
             try
             {
-
                 Expression<Func<Report, bool>> predicate = r => true;
 
                 if (filter.IncidentId.HasValue && filter.CreatedDate.HasValue && filter.IncidentTypeId.HasValue)
@@ -60,12 +59,14 @@ namespace SafeReport.Application.Services
                 if (filter.IncidentTypeId.HasValue)
                     predicate = r => r.IncidentTypeId == filter.IncidentTypeId.Value;
 
-                Expression<Func<Report, object>> include = r => r.Incident;
+                Expression<Func<Report, object>>[] include = { r => r.Incident };
                 // Pass to repository
                 var reports = await _reportRepository.GetPagedAsync(
                     filter.PageNumber.Value,
                     filter.PageSize.Value,
                     predicate,
+                    r => r.CreatedDate,
+                    descending: true,
                     include);
 
                 var totalCount = await _reportRepository.GetTotalCountAsync(predicate);
