@@ -6,11 +6,10 @@ namespace SafeReport.Web.Services
     {
         private HubConnection? _hubConnection;
         public event Action<ReportDTO>? OnNewReport;
-
         public async Task StartAsync()
         {
             _hubConnection = new HubConnectionBuilder()
-                .WithUrl("https://localhost:5001/reportHub") 
+                .WithUrl("https://localhost:7196/reportHub")
                 .WithAutomaticReconnect()
                 .Build();
 
@@ -19,7 +18,15 @@ namespace SafeReport.Web.Services
                 OnNewReport?.Invoke(report);
             });
 
-            await _hubConnection.StartAsync();
+            try
+            {
+                await _hubConnection.StartAsync();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($" SignalR connection failed: {ex.Message}");
+            }
         }
+
     }
 }
