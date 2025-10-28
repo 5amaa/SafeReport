@@ -55,11 +55,7 @@ namespace SafeReport.Infrastructure.Common
             await _context.SaveChangesAsync();
         }
 
-        public async Task<IEnumerable<T>> GetPagedAsync(
-          int pageNumber,
-          int pageSize,
-          Expression<Func<T, bool>> predicate,
-          params Expression<Func<T, object>>[]? includes)
+        public async Task<IEnumerable<T>> GetPagedAsync(int pageNumber, int pageSize, Expression<Func<T, bool>> predicate, params Expression<Func<T, object>>[]? includes)
         {
             IQueryable<T> query = _dbSet;
 
@@ -97,8 +93,7 @@ namespace SafeReport.Infrastructure.Common
 
             return await query.AsNoTracking().ToListAsync();
         }
-        public async Task<T> FindAsync(Expression<Func<T, bool>> predicate,
-    Expression<Func<T, object>>[]? includes = null)
+        public async Task<T> FindAsync(Expression<Func<T, bool>> predicate, Expression<Func<T, object>>[]? includes = null)
         {
             IQueryable<T> query = _dbSet.Where(predicate);
 

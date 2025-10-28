@@ -103,7 +103,7 @@ namespace SafeReport.Application.Services
                         IncidentTypeId = report.IncidentTypeId,
                         IncidentTypeName = incidentTypeName ?? "N/A",
                         Address = report.Address,
-                        Image = report.ImagePath,
+                        //  Image = report.ImagePath,
                         TimeSinceCreated = string.Empty
                     };
                 }).ToList();
@@ -166,19 +166,34 @@ namespace SafeReport.Application.Services
                 // Get address from coordinates
                 // report.Address = await GetAddressFromCoordinatesAsync(reportDto.Latitude, reportDto.Longitude);
 
-                if (reportDto.Image != null)
+                if (reportDto.Images != null && reportDto.Images.Any())
                 {
                     var uploadsFolder = Path.Combine(_env.WebRootPath, "images");
                     Directory.CreateDirectory(uploadsFolder);
 
-                    var fileName = Guid.NewGuid() + Path.GetExtension(reportDto.Image.FileName);
-                    var filePath = Path.Combine(uploadsFolder, fileName);
+                    report.Images = new List<ReportImage>();
 
-                    using var stream = new FileStream(filePath, FileMode.Create);
-                    await reportDto.Image.CopyToAsync(stream);
+                    foreach (var file in reportDto.Images)
+                    {
+                        if (file != null && file.Length > 0)
+                        {
+                            var fileName = $"{Guid.NewGuid()}{Path.GetExtension(file.FileName)}";
+                            var filePath = Path.Combine(uploadsFolder, fileName);
 
-                    report.ImagePath = $"images/{fileName}";
+                            using (var stream = new FileStream(filePath, FileMode.Create))
+                            {
+                                await file.CopyToAsync(stream);
+                            }
+
+                            report.Images.Add(new ReportImage
+                            {
+                                ImagePath = $"images/{fileName}",
+                                CreatedDate = DateTime.UtcNow
+                            });
+                        }
+                    }
                 }
+
 
 
                 await _reportRepository.AddAsync(report);
