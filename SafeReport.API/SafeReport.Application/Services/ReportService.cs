@@ -17,54 +17,59 @@ namespace SafeReport.Application.Services
     {
         private readonly IReportRepository _reportRepository;
         private readonly IIncidentTypeRepository _incidentTypeRepository;
+        private readonly IIncidentRepository _incidentRepository;
         private readonly IMapper _mapper;
         private readonly IHubContext<ReportHub> _hubContext;
         private readonly IWebHostEnvironment _env;
         public ReportService(
             IReportRepository reportRepository,
             IIncidentTypeRepository incidentTypeRepository,
-            IViolationRepository violationRepository,
-            IOtherRepository otherRepository,
             IMapper mapper,
             IHubContext<ReportHub> hubContext,
-            IWebHostEnvironment env)
+            IWebHostEnvironment env,
+            IIncidentRepository incidentRepository)
         {
             _reportRepository = reportRepository;
             _incidentTypeRepository = incidentTypeRepository;
             _mapper = mapper;
             _hubContext = hubContext;
             _env = env;
+            _incidentRepository = incidentRepository;
         }
 
         public async Task<Response<PagedResultDto>> GetPaginatedReportsAsync(ReportFilterDto? filter)
         {
             try
             {
-
                 Expression<Func<Report, bool>> predicate = r => true;
 
-                if (filter.IncidentId.HasValue && filter.CreatedDate.HasValue)
+                if (filter.IncidentId.HasValue && filter.CreatedDate.HasValue && filter.IncidentTypeId.HasValue)
                 {
-                    predicate = r => r.IncidentId == filter.IncidentId.Value && r.CreatedDate.Date == filter.CreatedDate.Value.Date;
-                }
-                else if (filter.IncidentId.HasValue)
-                {
-                    predicate = r => r.IncidentId == filter.IncidentId.Value;
-                }
-                else if (filter.CreatedDate.HasValue)
-                {
-                    predicate = r => r.CreatedDate.Date == filter.CreatedDate.Value.Date;
+                    predicate = r => r.IncidentId == filter.IncidentId.Value &&
+                                     r.CreatedDate.Date == filter.CreatedDate.Value.Date &&
+                                     r.IncidentTypeId == filter.IncidentTypeId.Value;
                 }
 
-                Expression<Func<Report, object>> include = r => r.Incident;
+                if (filter.IncidentId.HasValue)
+                    predicate = r => r.IncidentId == filter.IncidentId.Value;
+
+                if (filter.CreatedDate.HasValue)
+                    predicate = r => r.CreatedDate.Date == filter.CreatedDate.Value.Date;
+
+                if (filter.IncidentTypeId.HasValue)
+                    predicate = r => r.IncidentTypeId == filter.IncidentTypeId.Value;
+
+                Expression<Func<Report, object>>[] include = { r => r.Incident, r => r.Images };
                 // Pass to repository
                 var reports = await _reportRepository.GetPagedAsync(
                     filter.PageNumber.Value,
                     filter.PageSize.Value,
                     predicate,
+                    r => r.CreatedDate,
+                    descending: true,
                     include);
 
-                var totalCount = await _reportRepository.GetTotalCountAsync();
+                var totalCount = await _reportRepository.GetTotalCountAsync(predicate);
                 // Get related incident type info
                 var incidentTypeIds = reports.Select(r => r.IncidentTypeId).Distinct().ToList();
                 var incidentIds = reports.Select(r => r.IncidentId).Distinct().ToList();
@@ -94,7 +99,10 @@ namespace SafeReport.Application.Services
                         : report.Incident?.NameEn ?? report.Incident?.NameAr;
 
                     incidentTypeDict.TryGetValue((report.IncidentId, report.IncidentTypeId), out string? incidentTypeName);
-
+                    var i = report.Images?
+                           .Where(img => !string.IsNullOrEmpty(img.ImagePath))
+                           .Select(img => img.ImagePath)
+                           .ToList();
                     return new ReportDto
                     {
                         Id = report.Id,
@@ -105,7 +113,10 @@ namespace SafeReport.Application.Services
                         IncidentTypeId = report.IncidentTypeId,
                         IncidentTypeName = incidentTypeName ?? "N/A",
                         Address = report.Address,
-                        Image = report.ImagePath,
+                        ImagePaths = report.Images?
+                           .Where(img => !string.IsNullOrEmpty(img.ImagePath))
+                           .Select(img => img.ImagePath)
+                           .ToList() ?? new List<string>(),
                         TimeSinceCreated = string.Empty
                     };
                 }).ToList();
@@ -157,37 +168,71 @@ namespace SafeReport.Application.Services
             var incidentType = await _incidentTypeRepository.FindAsync(t => t.Id == report.IncidentTypeId && t.IncidentId == report.IncidentId);
             if (report == null)
                 return null;
-            return PrintService.GenerateReportPdf(report, incidentType);
+            return PrintService.GenerateReportPdf(report, incidentType, _env);
         }
         public async Task<Response<string>> AddReportAsync(CreateReportDto reportDto)
         {
             try
             {
+                var incident = await _incidentRepository.FindAsync(
+                      i => i.Id == reportDto.IncidentId && !i.IsDeleted);
+
+                if (incident is null)
+                {
+                    return Response<string>.FailResponse("The selected incident does not exist.");
+                }
+
+
+                var incidentType = await _incidentTypeRepository.FindAsync(
+                    t => t.IncidentId == reportDto.IncidentId &&
+                         t.Id == reportDto.IncidentTypeId &&
+                         !t.IsDeleted);
+
+                if (incidentType is null)
+                {
+                    return Response<string>.FailResponse("The selected incident type does not belong to the chosen incident.");
+                }
+
                 var report = _mapper.Map<Report>(reportDto);
 
                 // Get address from coordinates
                 // report.Address = await GetAddressFromCoordinatesAsync(reportDto.Latitude, reportDto.Longitude);
 
-                if (reportDto.Image != null)
+                if (reportDto.Images != null && reportDto.Images.Any())
                 {
                     var uploadsFolder = Path.Combine(_env.WebRootPath, "images");
                     Directory.CreateDirectory(uploadsFolder);
 
-                    var fileName = Guid.NewGuid() + Path.GetExtension(reportDto.Image.FileName);
-                    var filePath = Path.Combine(uploadsFolder, fileName);
+                    report.Images = new List<ReportImage>();
 
-                    using var stream = new FileStream(filePath, FileMode.Create);
-                    await reportDto.Image.CopyToAsync(stream);
+                    foreach (var file in reportDto.Images)
+                    {
+                        if (file != null && file.Length > 0)
+                        {
+                            var fileName = $"{Guid.NewGuid()}{Path.GetExtension(file.FileName)}";
+                            var filePath = Path.Combine(uploadsFolder, fileName);
 
-                    report.ImagePath = $"images/{fileName}";
+                            using (var stream = new FileStream(filePath, FileMode.Create))
+                            {
+                                await file.CopyToAsync(stream);
+                            }
+
+                            report.Images.Add(new ReportImage
+                            {
+                                ImagePath = $"images/{fileName}",
+                                CreatedDate = DateTime.UtcNow
+                            });
+                        }
+                    }
                 }
+
 
 
                 await _reportRepository.AddAsync(report);
                 await _reportRepository.SaveChangesAsync();
 
-
-                await _hubContext.Clients.All.SendAsync("ReceiveNewReport", reportDto);
+                ReportDto reportdto = _mapper.Map<ReportDto>(report);
+                await _hubContext.Clients.All.SendAsync("ReceiveNewReport", reportdto);
 
                 return Response<string>.SuccessResponse("Report added successfully.");
             }
@@ -234,30 +279,7 @@ namespace SafeReport.Application.Services
         }
 
 
-        //public async Task<Response<string>> AddReportAsync(ReportDto reportDto)
-        //{
-        //    try
-        //    {
-        //        var report = new Report
-        //        {
-        //            Name = reportDto.Name,
-        //            IncidentId = reportDto.IncidentId,
-        //            IncidentTypeId = reportDto.IncidentTypeId,
-        //            CreatedDate = DateTime.UtcNow
-        //        };
 
-        //        await _reportRepository.AddAsync(report);
-        //        await _reportRepository.SaveChangesAsync();
-
-        //        await _hubContext.Clients.All.SendAsync("ReceiveNewReport", reportDto);
-
-        //        return Response<string>.SuccessResponse("Report added successfully.");
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        return Response<string>.FailResponse($"Error adding report: {ex.Message}");
-        //    }
-        //}
 
     }
 }

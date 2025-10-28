@@ -17,5 +17,12 @@
   <ItemGroup>
     <Folder Include="wwwroot\" />
   </ItemGroup>
-
+	<ItemGroup>
+		<None Update="wwwroot\fonts\arialuni.ttf">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Update="wwwroot\fonts\arial.ttff">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+	</ItemGroup>
 </Project>

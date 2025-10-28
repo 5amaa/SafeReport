@@ -38,9 +38,9 @@ else
     <table class="table table-striped">
         <thead class="table-dark">
             <tr>
-                <th>Name</th>
-                <th>Incident Name</th>
                 <th>Incident Type</th>
+                <th>Incident Name</th>
+                <th>Description</th>
                 <th>Created Date</th>
                 <th>Actions</th>
             </tr>
@@ -49,9 +49,9 @@ else
             @foreach (var report in pagedReports)
             {
                 <tr>
-                    <td>@report.Name</td>
-                    <td>@report.IncidentName</td>
                     <td>@report.IncidentTypeName</td>
+                    <td>@report.IncidentName</td>
+                    <td>@report.Description</td>
                     <td>@report.CreatedDate.ToString("yyyy-MM-dd HH:mm")</td>
                     <td>
                         <button class="btn btn-sm btn-primary me-2" @onclick="() => PrintReport(report.Id)">

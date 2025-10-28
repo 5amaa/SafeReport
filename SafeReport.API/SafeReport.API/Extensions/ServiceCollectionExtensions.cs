@@ -7,29 +7,28 @@ using SafeReport.Infrastructure.Repositories;
 
 namespace SafeReport.API.Extensions
 {
-	public static class ServiceCollectionExtensions
-	{
-		public static IServiceCollection AddInfrastructureServices(this IServiceCollection services, string connectionString)
-		{
-			services.AddDbContext<SafeReportDbContext>(options =>
-				options.UseSqlServer(connectionString));
+    public static class ServiceCollectionExtensions
+    {
+        public static IServiceCollection AddInfrastructureServices(this IServiceCollection services, string connectionString)
+        {
+            services.AddDbContext<SafeReportDbContext>(options =>
+                options.UseSqlServer(connectionString));
 
-			services.AddScoped<IIncidentRepository, IncidentRepository>();
-		    services.AddScoped<IIncidentTypeRepository, IncidentTypeRepository>();
-			services.AddScoped<IReportRepository, ReportRepository>();
-		    services.AddScoped<IViolationRepository, ViolationRepository>();
-		    services.AddScoped<IOtherRepository, OtherIncidentRepository>();
+            services.AddScoped<IIncidentRepository, IncidentRepository>();
+            services.AddScoped<IIncidentTypeRepository, IncidentTypeRepository>();
+            services.AddScoped<IReportRepository, ReportRepository>();
 
-			return services;
-		}
+            return services;
+        }
 
 
 
-		public static IServiceCollection AddApplicationServices(this IServiceCollection services)
-		{
-			services.AddScoped<IIncidentService, IncidentService>();
-			services.AddScoped<IReportService, ReportService>();
-			return services;
-		}
-	}
+        public static IServiceCollection AddApplicationServices(this IServiceCollection services)
+        {
+            services.AddScoped<IIncidentService, IncidentService>();
+            services.AddScoped<IIncidentTypeService, IncidentTypeService>();
+            services.AddScoped<IReportService, ReportService>();
+            return services;
+        }
+    }
 }
