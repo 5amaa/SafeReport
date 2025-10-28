@@ -17,6 +17,7 @@ namespace SafeReport.Application.Services
     {
         private readonly IReportRepository _reportRepository;
         private readonly IIncidentTypeRepository _incidentTypeRepository;
+        private readonly IIncidentRepository _incidentRepository;
         private readonly IMapper _mapper;
         private readonly IHubContext<ReportHub> _hubContext;
         private readonly IWebHostEnvironment _env;
@@ -25,13 +26,15 @@ namespace SafeReport.Application.Services
             IIncidentTypeRepository incidentTypeRepository,
             IMapper mapper,
             IHubContext<ReportHub> hubContext,
-            IWebHostEnvironment env)
+            IWebHostEnvironment env,
+            IIncidentRepository incidentRepository)
         {
             _reportRepository = reportRepository;
             _incidentTypeRepository = incidentTypeRepository;
             _mapper = mapper;
             _hubContext = hubContext;
             _env = env;
+            _incidentRepository = incidentRepository;
         }
 
         public async Task<Response<PagedResultDto>> GetPaginatedReportsAsync(ReportFilterDto? filter)
@@ -47,17 +50,17 @@ namespace SafeReport.Application.Services
                                      r.CreatedDate.Date == filter.CreatedDate.Value.Date &&
                                      r.IncidentTypeId == filter.IncidentTypeId.Value;
                 }
-                
-                 if (filter.IncidentId.HasValue)
+
+                if (filter.IncidentId.HasValue)
                     predicate = r => r.IncidentId == filter.IncidentId.Value;
-                
-                 if (filter.CreatedDate.HasValue) 
+
+                if (filter.CreatedDate.HasValue)
                     predicate = r => r.CreatedDate.Date == filter.CreatedDate.Value.Date;
-                
+
                 if (filter.IncidentTypeId.HasValue)
-					predicate = r => r.IncidentTypeId == filter.IncidentTypeId.Value;
-				
-					Expression<Func<Report, object>> include = r => r.Incident;
+                    predicate = r => r.IncidentTypeId == filter.IncidentTypeId.Value;
+
+                Expression<Func<Report, object>> include = r => r.Incident;
                 // Pass to repository
                 var reports = await _reportRepository.GetPagedAsync(
                     filter.PageNumber.Value,
@@ -158,12 +161,31 @@ namespace SafeReport.Application.Services
             var incidentType = await _incidentTypeRepository.FindAsync(t => t.Id == report.IncidentTypeId && t.IncidentId == report.IncidentId);
             if (report == null)
                 return null;
-            return PrintService.GenerateReportPdf(report, incidentType , _env);
+            return PrintService.GenerateReportPdf(report, incidentType, _env);
         }
         public async Task<Response<string>> AddReportAsync(CreateReportDto reportDto)
         {
             try
             {
+                var incident = await _incidentRepository.FindAsync(
+                      i => i.Id == reportDto.IncidentId && !i.IsDeleted);
+
+                if (incident is null)
+                {
+                    return Response<string>.FailResponse("The selected incident does not exist.");
+                }
+
+
+                var incidentType = await _incidentTypeRepository.FindAsync(
+                    t => t.IncidentId == reportDto.IncidentId &&
+                         t.Id == reportDto.IncidentTypeId &&
+                         !t.IsDeleted);
+
+                if (incidentType is null)
+                {
+                    return Response<string>.FailResponse("The selected incident type does not belong to the chosen incident.");
+                }
+
                 var report = _mapper.Map<Report>(reportDto);
 
                 // Get address from coordinates
