@@ -59,7 +59,7 @@ namespace SafeReport.Application.Services
                 if (filter.IncidentTypeId.HasValue)
                     predicate = r => r.IncidentTypeId == filter.IncidentTypeId.Value;
 
-                Expression<Func<Report, object>>[] include = { r => r.Incident };
+                Expression<Func<Report, object>>[] include = { r => r.Incident, r => r.Images };
                 // Pass to repository
                 var reports = await _reportRepository.GetPagedAsync(
                     filter.PageNumber.Value,
@@ -99,7 +99,10 @@ namespace SafeReport.Application.Services
                         : report.Incident?.NameEn ?? report.Incident?.NameAr;
 
                     incidentTypeDict.TryGetValue((report.IncidentId, report.IncidentTypeId), out string? incidentTypeName);
-
+                    var i = report.Images?
+                           .Where(img => !string.IsNullOrEmpty(img.ImagePath))
+                           .Select(img => img.ImagePath)
+                           .ToList();
                     return new ReportDto
                     {
                         Id = report.Id,
@@ -110,7 +113,10 @@ namespace SafeReport.Application.Services
                         IncidentTypeId = report.IncidentTypeId,
                         IncidentTypeName = incidentTypeName ?? "N/A",
                         Address = report.Address,
-                        //  Image = report.ImagePath,
+                        ImagePaths = report.Images?
+                           .Where(img => !string.IsNullOrEmpty(img.ImagePath))
+                           .Select(img => img.ImagePath)
+                           .ToList() ?? new List<string>(),
                         TimeSinceCreated = string.Empty
                     };
                 }).ToList();
